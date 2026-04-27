@@ -18,7 +18,7 @@ function rgb2hsv(r, g, b) {
   return [h * 360, s, v];
 }
 
-// Classification + masking
+// Classification + masking with circle outline
 function classifyAndMask(canvas, thresholds) {
   const ctx = canvas.getContext('2d');
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
@@ -70,6 +70,13 @@ function classifyAndMask(canvas, thresholds) {
 
   ctx.putImageData(imageData, 0, 0);
 
+  // Draw circle outline
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, 2*Math.PI);
+  ctx.strokeStyle = "red";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
   let total = Object.values(counts).reduce((a,b)=>a+b,0) || 1;
   let percentages = {};
   for (let c in counts) {
@@ -101,6 +108,7 @@ function classifyAndMask(canvas, thresholds) {
 
 // UI wiring
 const upload = document.getElementById('upload');
+const autoDetectBtn = document.getElementById('autoDetect');
 const canvasOriginal = document.getElementById('canvasOriginal');
 const canvasClassified = document.getElementById('canvasClassified');
 const ctxOriginal = canvasOriginal.getContext('2d');
@@ -150,6 +158,43 @@ function updateResults() {
     "Dominant Light Green RGB: " + result.domLight.join(", ");
 }
 
+// Auto-detect clustering (simple hue clustering)
+
+// Auto-detect clustering (simple hue clustering)
+function autoDetect() {
+  const ctx = canvasOriginal.getContext('2d');
+  const imageData = ctx.getImageData(0, 0, canvasOriginal.width, canvasOriginal.height);
+  const data = imageData.data;
+  let hues = [];
+
+  for (let i = 0; i < data.length; i += 4) {
+    let r = data[i], g = data[i+1], b = data[i+2];
+    let [h,s,v] = rgb2hsv(r,g,b);
+    hues.push(h);
+  }
+
+  hues.sort((a,b)=>a-b);
+  let n = hues.length;
+  if (n < 3) return;
+
+  // crude clustering: quartiles
+  let cluster1 = hues[Math.floor(n/4)];
+  let cluster2 = hues[Math.floor(n/2)];
+  let cluster3 = hues[Math.floor(3*n/4)];
+
+  // map clusters to slider ranges
+  document.getElementById('greenHmin').value = Math.max(0, cluster1 - 20);
+  document.getElementById('greenHmax').value = Math.min(360, cluster1 + 20);
+
+  document.getElementById('brownHmin').value = Math.max(0, cluster2 - 20);
+  document.getElementById('brownHmax').value = Math.min(360, cluster2 + 20);
+
+  document.getElementById('skyHmin').value = Math.max(0, cluster3 - 20);
+  document.getElementById('skyHmax').value = Math.min(360, cluster3 + 20);
+
+  updateResults();
+}
+
 // Handle image upload
 upload.addEventListener('change', e => {
   const file = e.target.files[0];
@@ -162,8 +207,12 @@ upload.addEventListener('change', e => {
     canvasClassified.height = img.height;
     ctxOriginal.drawImage(img, 0, 0);
     ctxClassified.drawImage(img, 0, 0);
-    // Default radius = half of smaller dimension
-    document.getElementById('radius').value = Math.min(img.width, img.height) / 2;
+
+    // set slider max to half of smaller dimension
+    let maxRadius = Math.min(img.width, img.height) / 2;
+    document.getElementById('radius').max = maxRadius;
+    document.getElementById('radius').value = maxRadius;
+
     updateResults();
   };
   img.src = URL.createObjectURL(file);
@@ -173,3 +222,6 @@ upload.addEventListener('change', e => {
 document.querySelectorAll('#controls input').forEach(input => {
   input.addEventListener('input', updateResults);
 });
+
+// Auto-detect button
+autoDetectBtn.addEventListener('click', autoDetect);
