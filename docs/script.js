@@ -18,8 +18,8 @@ function rgb2hsv(r, g, b) {
   return [h * 360, s, v];
 }
 
-// Classification function
-function classifyImage(canvas, thresholds) {
+// Classification + masking
+function classifyAndMask(canvas, thresholds) {
   const ctx = canvas.getContext('2d');
   const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const data = imageData.data;
@@ -35,7 +35,11 @@ function classifyImage(canvas, thresholds) {
     let x = (i/4) % canvas.width;
     let y = Math.floor((i/4) / canvas.width);
 
-    if ((x-cx)**2 + (y-cy)**2 > radius**2) continue;
+    if ((x-cx)**2 + (y-cy)**2 > radius**2) {
+      // Outside circular crop: grey mask
+      data[i] = 200; data[i+1] = 200; data[i+2] = 200;
+      continue;
+    }
 
     let r = data[i], g = data[i+1], b = data[i+2];
     let [h,s,v] = rgb2hsv(r,g,b);
@@ -44,10 +48,15 @@ function classifyImage(canvas, thresholds) {
     if (h >= thresholds.greenHmin && h <= thresholds.greenHmax && s > thresholds.greenSmin) {
       cls = "Green";
       greenPixels.push({r,g,b,v});
+      data[i] = 0; data[i+1] = 128; data[i+2] = 0; // green mask
     } else if (h >= thresholds.brownHmin && h <= thresholds.brownHmax && s > thresholds.brownSmin && v < thresholds.brownVmax) {
       cls = "Brown";
+      data[i] = 139; data[i+1] = 69; data[i+2] = 19; // brown mask
     } else if (h >= thresholds.skyHmin && h <= thresholds.skyHmax && v > thresholds.skyVmin) {
       cls = "Sky";
+      data[i] = 135; data[i+1] = 206; data[i+2] = 235; // sky mask
+    } else {
+      data[i] = 220; data[i+1] = 220; data[i+2] = 220; // other mask
     }
     counts[cls] = (counts[cls] || 0) + 1;
   }
@@ -60,7 +69,9 @@ function classifyImage(canvas, thresholds) {
     counts.Green = 0;
   }
 
-  let total = Object.values(counts).reduce((a,b)=>a+b,0) || 1; // avoid divide by zero
+  ctx.putImageData(imageData, 0, 0);
+
+  let total = Object.values(counts).reduce((a,b)=>a+b,0) || 1;
   let percentages = {};
   for (let c in counts) {
     percentages[c] = (counts[c]/total*100).toFixed(1);
@@ -112,12 +123,26 @@ function getThresholds() {
 
 function updateResults() {
   let thresholds = getThresholds();
-  let result = classifyImage(canvas, thresholds);
+  let result = classifyAndMask(canvas, thresholds);
 
-  // Build table
-  let tableHTML = "<tr><th>Class</th><th>% Pixels</th></tr>";
+  // Define swatch colors
+  const swatches = {
+    DarkGreen: "rgb(0,100,0)",
+    LightGreen: "rgb(144,238,144)",
+    Brown: "rgb(139,69,19)",
+    Sky: "rgb(135,206,235)",
+    Other: "rgb(200,200,200)"
+  };
+
+  // Build table with swatches
+  let tableHTML = "<tr><th>Class</th><th>Color</th><th>% Pixels</th></tr>";
   for (let c in result.percentages) {
-    tableHTML += `<tr><td>${c}</td><td>${result.percentages[c]}%</td></tr>`;
+    let color = swatches[c] || "rgb(220,220,220)";
+    tableHTML += `<tr>
+      <td>${c}</td>
+      <td><div style="width:20px;height:20px;background:${color};border:1px solid #000;"></div></td>
+      <td>${result.percentages[c]}%</td>
+    </tr>`;
   }
   document.getElementById('percentagesTable').innerHTML = tableHTML;
 
