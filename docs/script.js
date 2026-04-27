@@ -113,6 +113,89 @@ function getThresholds() {
 function updateResults() {
   let thresholds = getThresholds();
   let result = classifyImage(canvas, thresholds);
+
+  // Build table
+  let tableHTML = "<tr><th>Class</th><th>% Pixels</th></tr>";
+  for (let c in result.percentages) {
+    tableHTML += `<tr><td>${c}</td><td>${result.percentages[c]}%</td></tr>`;
+  }
+  document.getElementById('percentagesTable').innerHTML = tableHTML;
+
+  // Show dominant RGBs
+  document.getElementById('dominant').textContent =
+    "Dominant Dark Green RGB: " + result.domDark.join(", ") + "\n" +
+    "Dominant Light Green RGB: " + result.domLight.join(", ");
+}
+
+upload.addEventListener('change', e => {
+  const file = e.target.files[0];
+  const img = new Image();
+  img.onload = () => {
+    canvas.width = img.width;
+    canvas.height = img.height;
+    ctx.drawImage(img, 0, 0);
+    updateResults();
+  };
+  img.src = URL.createObjectURL(file);
+});
+
+// Re-run classification when sliders change
+document.querySelectorAll('#controls input').forEach(input => {
+  input.addEventListener('input', updateResults);
+});
+  let total = Object.values(counts).reduce((a,b)=>a+b,0);
+  let percentages = {};
+  for (let c in counts) {
+    percentages[c] = (counts[c]/total*100).toFixed(1);
+  }
+
+  function medianRGB(pixels) {
+    if (pixels.length === 0) return [0,0,0];
+    let rs = pixels.map(p=>p.r).sort((a,b)=>a-b);
+    let gs = pixels.map(p=>p.g).sort((a,b)=>a-b);
+    let bs = pixels.map(p=>p.b).sort((a,b)=>a-b);
+    return [
+      rs[Math.floor(rs.length/2)],
+      gs[Math.floor(gs.length/2)],
+      bs[Math.floor(bs.length/2)]
+    ];
+  }
+
+  let vSorted = greenPixels.map(p=>p.v).sort((a,b)=>a-b);
+  let vMedian = vSorted[Math.floor(vSorted.length/2)];
+  let darkPixels = greenPixels.filter(p => p.v <= vMedian);
+  let lightPixels = greenPixels.filter(p => p.v > vMedian);
+
+  let domDark = medianRGB(darkPixels);
+  let domLight = medianRGB(lightPixels);
+
+  return {percentages, domDark, domLight};
+}
+
+// UI wiring
+const upload = document.getElementById('upload');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+function getThresholds() {
+  return {
+    radius: parseInt(document.getElementById('radius').value),
+    greenHmin: parseFloat(document.getElementById('greenHmin').value),
+    greenHmax: parseFloat(document.getElementById('greenHmax').value),
+    greenSmin: parseFloat(document.getElementById('greenSmin').value),
+    brownHmin: parseFloat(document.getElementById('brownHmin').value),
+    brownHmax: parseFloat(document.getElementById('brownHmax').value),
+    brownSmin: parseFloat(document.getElementById('brownSmin').value),
+    brownVmax: parseFloat(document.getElementById('brownVmax').value),
+    skyHmin: parseFloat(document.getElementById('skyHmin').value),
+    skyHmax: parseFloat(document.getElementById('skyHmax').value),
+    skyVmin: parseFloat(document.getElementById('skyVmin').value)
+  };
+}
+
+function updateResults() {
+  let thresholds = getThresholds();
+  let result = classifyImage(canvas, thresholds);
   document.getElementById('percentages').textContent = JSON.stringify(result.percentages, null, 2);
   document.getElementById('dominant').textContent = 
     "Dominant Dark Green RGB: " + result.domDark.join(", ") + "\n" +
