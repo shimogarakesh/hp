@@ -60,7 +60,7 @@ function classifyImage(canvas, thresholds) {
     counts.Green = 0;
   }
 
-  let total = Object.values(counts).reduce((a,b)=>a+b,0);
+  let total = Object.values(counts).reduce((a,b)=>a+b,0) || 1; // avoid divide by zero
   let percentages = {};
   for (let c in counts) {
     percentages[c] = (counts[c]/total*100).toFixed(1);
@@ -113,20 +113,30 @@ function getThresholds() {
 function updateResults() {
   let thresholds = getThresholds();
   let result = classifyImage(canvas, thresholds);
-  document.getElementById('percentages').textContent = JSON.stringify(result.percentages, null, 2);
-  document.getElementById('dominant').textContent = 
+
+  // Build table
+  let tableHTML = "<tr><th>Class</th><th>% Pixels</th></tr>";
+  for (let c in result.percentages) {
+    tableHTML += `<tr><td>${c}</td><td>${result.percentages[c]}%</td></tr>`;
+  }
+  document.getElementById('percentagesTable').innerHTML = tableHTML;
+
+  // Show dominant RGBs
+  document.getElementById('dominant').textContent =
     "Dominant Dark Green RGB: " + result.domDark.join(", ") + "\n" +
     "Dominant Light Green RGB: " + result.domLight.join(", ");
 }
 
+// Handle image upload
 upload.addEventListener('change', e => {
   const file = e.target.files[0];
+  if (!file) return;
   const img = new Image();
   img.onload = () => {
     canvas.width = img.width;
     canvas.height = img.height;
     ctx.drawImage(img, 0, 0);
-    updateResults();
+    updateResults(); // run classification immediately
   };
   img.src = URL.createObjectURL(file);
 });
