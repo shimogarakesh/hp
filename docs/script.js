@@ -26,7 +26,7 @@ function classifyAndMask(canvas, thresholds) {
 
   const cx = canvas.width / 2;
   const cy = canvas.height / 2;
-  const radius = thresholds.radius;
+  const radius = thresholds.radius || Math.min(canvas.width, canvas.height) / 2;
 
   let counts = {DarkGreen:0, LightGreen:0, Brown:0, Sky:0, Other:0};
   let greenPixels = [];
@@ -36,7 +36,6 @@ function classifyAndMask(canvas, thresholds) {
     let y = Math.floor((i/4) / canvas.width);
 
     if ((x-cx)**2 + (y-cy)**2 > radius**2) {
-      // Outside circular crop: grey mask
       data[i] = 200; data[i+1] = 200; data[i+2] = 200;
       continue;
     }
@@ -48,15 +47,15 @@ function classifyAndMask(canvas, thresholds) {
     if (h >= thresholds.greenHmin && h <= thresholds.greenHmax && s > thresholds.greenSmin) {
       cls = "Green";
       greenPixels.push({r,g,b,v});
-      data[i] = 0; data[i+1] = 128; data[i+2] = 0; // green mask
+      data[i] = 0; data[i+1] = 128; data[i+2] = 0;
     } else if (h >= thresholds.brownHmin && h <= thresholds.brownHmax && s > thresholds.brownSmin && v < thresholds.brownVmax) {
       cls = "Brown";
-      data[i] = 139; data[i+1] = 69; data[i+2] = 19; // brown mask
+      data[i] = 139; data[i+1] = 69; data[i+2] = 19;
     } else if (h >= thresholds.skyHmin && h <= thresholds.skyHmax && v > thresholds.skyVmin) {
       cls = "Sky";
-      data[i] = 135; data[i+1] = 206; data[i+2] = 235; // sky mask
+      data[i] = 135; data[i+1] = 206; data[i+2] = 235;
     } else {
-      data[i] = 220; data[i+1] = 220; data[i+2] = 220; // other mask
+      data[i] = 220; data[i+1] = 220; data[i+2] = 220;
     }
     counts[cls] = (counts[cls] || 0) + 1;
   }
@@ -102,8 +101,10 @@ function classifyAndMask(canvas, thresholds) {
 
 // UI wiring
 const upload = document.getElementById('upload');
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
+const canvasOriginal = document.getElementById('canvasOriginal');
+const canvasClassified = document.getElementById('canvasClassified');
+const ctxOriginal = canvasOriginal.getContext('2d');
+const ctxClassified = canvasClassified.getContext('2d');
 
 function getThresholds() {
   return {
@@ -123,9 +124,8 @@ function getThresholds() {
 
 function updateResults() {
   let thresholds = getThresholds();
-  let result = classifyAndMask(canvas, thresholds);
+  let result = classifyAndMask(canvasClassified, thresholds);
 
-  // Define swatch colors
   const swatches = {
     DarkGreen: "rgb(0,100,0)",
     LightGreen: "rgb(144,238,144)",
@@ -134,7 +134,6 @@ function updateResults() {
     Other: "rgb(200,200,200)"
   };
 
-  // Build table with swatches
   let tableHTML = "<tr><th>Class</th><th>Color</th><th>% Pixels</th></tr>";
   for (let c in result.percentages) {
     let color = swatches[c] || "rgb(220,220,220)";
@@ -146,7 +145,6 @@ function updateResults() {
   }
   document.getElementById('percentagesTable').innerHTML = tableHTML;
 
-  // Show dominant RGBs
   document.getElementById('dominant').textContent =
     "Dominant Dark Green RGB: " + result.domDark.join(", ") + "\n" +
     "Dominant Light Green RGB: " + result.domLight.join(", ");
@@ -158,10 +156,15 @@ upload.addEventListener('change', e => {
   if (!file) return;
   const img = new Image();
   img.onload = () => {
-    canvas.width = img.width;
-    canvas.height = img.height;
-    ctx.drawImage(img, 0, 0);
-    updateResults(); // run classification immediately
+    canvasOriginal.width = img.width;
+    canvasOriginal.height = img.height;
+    canvasClassified.width = img.width;
+    canvasClassified.height = img.height;
+    ctxOriginal.drawImage(img, 0, 0);
+    ctxClassified.drawImage(img, 0, 0);
+    // Default radius = half of smaller dimension
+    document.getElementById('radius').value = Math.min(img.width, img.height) / 2;
+    updateResults();
   };
   img.src = URL.createObjectURL(file);
 });
