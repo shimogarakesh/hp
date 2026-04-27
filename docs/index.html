@@ -11,25 +11,49 @@
   <input type="file" id="upload" accept="image/*"><br><br>
 
   <div id="controls">
-    <label>FOV Radius <input type="range" id="radius" min="50" max="500" value="250"></label><br>
-    <label>Green Hue Min <input type="range" id="greenHmin" min="0" max="360" value="90"></label><br>
-    <label>Green Hue Max <input type="range" id="greenHmax" min="0" max="360" value="150"></label><br>
-    <label>Green Saturation Min <input type="range" id="greenSmin" min="0" max="1" step="0.01" value="0.4"></label><br>
-    <label>Brown Hue Min <input type="range" id="brownHmin" min="0" max="360" value="20"></label><br>
-    <label>Brown Hue Max <input type="range" id="brownHmax" min="0" max="360" value="40"></label><br>
-    <label>Brown Saturation Min <input type="range" id="brownSmin" min="0" max="1" step="0.01" value="0.2"></label><br>
-    <label>Brown Value Max <input type="range" id="brownVmax" min="0" max="1" step="0.01" value="0.6"></label><br>
-    <label>Sky Hue Min <input type="range" id="skyHmin" min="0" max="360" value="180"></label><br>
-    <label>Sky Hue Max <input type="range" id="skyHmax" min="0" max="360" value="240"></label><br>
-    <label>Sky Value Min <input type="range" id="skyVmin" min="0" max="1" step="0.01" value="0.7"></label><br>
+    <label>FOV Radius 
+      <input type="range" id="radius" min="50" max="500" value="250">
+    </label><br>
+    <label>Green Hue Min 
+      <input type="range" id="greenHmin" min="0" max="360" value="90">
+    </label><br>
+    <label>Green Hue Max 
+      <input type="range" id="greenHmax" min="0" max="360" value="150">
+    </label><br>
+    <label>Green Saturation Min 
+      <input type="range" id="greenSmin" min="0" max="1" step="0.01" value="0.4">
+    </label><br>
+    <label>Brown Hue Min 
+      <input type="range" id="brownHmin" min="0" max="360" value="20">
+    </label><br>
+    <label>Brown Hue Max 
+      <input type="range" id="brownHmax" min="0" max="360" value="40">
+    </label><br>
+    <label>Brown Saturation Min 
+      <input type="range" id="brownSmin" min="0" max="1" step="0.01" value="0.2">
+    </label><br>
+    <label>Brown Value Max 
+      <input type="range" id="brownVmax" min="0" max="1" step="0.01" value="0.6">
+    </label><br>
+    <label>Sky Hue Min 
+      <input type="range" id="skyHmin" min="0" max="360" value="180">
+    </label><br>
+    <label>Sky Hue Max 
+      <input type="range" id="skyHmax" min="0" max="360" value="240">
+    </label><br>
+    <label>Sky Value Min 
+      <input type="range" id="skyVmin" min="0" max="1" step="0.01" value="0.7">
+    </label><br>
   </div>
 
-  <canvas id="canvas"></canvas>
+  <div id="main">
+    <canvas id="canvas"></canvas>
 
-  <div id="results">
-    <h3>Results</h3>
-    <pre id="percentages"></pre>
-    <pre id="dominant"></pre>
+    <div id="results">
+      <h3>Results</h3>
+      <table id="percentagesTable"></table>
+      <div id="dominant"></div>
+    </div>
   </div>
 
   <script src="script.js"></script>
