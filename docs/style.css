@@ -7,30 +7,15 @@ body {
   margin: 10px 0;
 }
 
-#main {
-  display: flex;
-  gap: 20px;
-  align-items: flex-start;
-}
-
-#canvas {
+canvas {
   border: 1px solid #ccc;
-  max-width: 60%;
+  display: block;
+  margin-top: 10px;
+  max-width: 100%;
 }
 
 #results {
-  flex: 1;
+  margin-top: 20px;
   background: #f9f9f9;
   padding: 10px;
-}
-
-#results table {
-  border-collapse: collapse;
-  width: 100%;
-}
-
-#results th, #results td {
-  border: 1px solid #ccc;
-  padding: 4px 8px;
-  text-align: left;
 }
