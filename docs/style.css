@@ -3,28 +3,23 @@ body {
   margin: 20px;
 }
 
-#layout {
-  display: grid;
-  grid-template-columns: 250px 1fr 250px;
+#controls {
+  margin: 10px 0;
+}
+
+#main {
+  display: flex;
   gap: 20px;
   align-items: flex-start;
 }
 
-#sidebar {
-  background: #f4f4f4;
-  padding: 10px;
-}
-
-#canvasColumn {
-  text-align: center;
-}
-
 #canvas {
   border: 1px solid #ccc;
-  max-width: 100%;
+  max-width: 60%;
 }
 
 #results {
+  flex: 1;
   background: #f9f9f9;
   padding: 10px;
 }
