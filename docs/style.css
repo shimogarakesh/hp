@@ -3,19 +3,39 @@ body {
   margin: 20px;
 }
 
-#controls {
-  margin: 10px 0;
+#layout {
+  display: grid;
+  grid-template-columns: 250px 1fr 250px;
+  gap: 20px;
+  align-items: flex-start;
 }
 
-canvas {
+#sidebar {
+  background: #f4f4f4;
+  padding: 10px;
+}
+
+#canvasColumn {
+  text-align: center;
+}
+
+#canvas {
   border: 1px solid #ccc;
-  display: block;
-  margin-top: 10px;
   max-width: 100%;
 }
 
 #results {
-  margin-top: 20px;
   background: #f9f9f9;
   padding: 10px;
+}
+
+#results table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+#results th, #results td {
+  border: 1px solid #ccc;
+  padding: 4px 8px;
+  text-align: left;
 }
